@@ -81,7 +81,14 @@ render.on('commitNavigation', (response) => {
       parser.write(buffer.toString())
     })
     response.on('end', () => {
-      console.dir(document, { depth: null })
+      // console.dir(document, { depth: null })
+      // 计算每个 DOM 节点的具体的样式 继承 层叠
+      recalculateStyle(cssRules, document)
+      // 创建一个只包含可见元素的布局树
+      const html = document.children[0]
+      const body = html.chilren[1]
+      const layoutTree = createLayoutTree(body)
+      console.dir(layoutTree, { depth: null })
       // DOM 解析完毕
       main.emit('DOMContentLoaded')
       // CSS和图片加载完成后
@@ -104,6 +111,56 @@ render.on('commitNavigation', (response) => {
   //   main.emit('Load')
   // })
 })
+
+function createLayoutTree(element) {
+  element.children = element.children.filter(isShow)
+  element.children.forEach(createLayoutTree)
+  return element
+}
+
+function isShow(element) {
+  let show = true // 默认都显示
+  if (element.tagName === 'head' || element.tagName === 'body') {
+    show = false
+  }
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (key === 'style') {
+      const attributes = value.split(/;\s*/) //[background: green;]
+      attributes.forEach(attribute => {
+        const [property, value] = attribute.split(/:\s*/) // ['background', green]
+        if (property === 'display' && value === 'none') {
+          show = false
+        }
+      })
+    }
+  })
+  return show
+}
+
+function recalculateStyle(cssRules, element, parentStyle = {}) {
+  const attributes = element.attributes
+  element.computedStyle = { color: parentStyle.color || 'black' } // 样式继承
+  Object.entries(attributes).forEach(([key, value]) => {
+    // 应用样式表
+    cssRules.forEach(rule => {
+      let selector = rule.selectors[0]
+      if (key === 'id' && selector === ('#' + value) || key === 'class' && selector === ('.' + value)) {
+        rule.declarations.forEach(({ property, value }) => {
+          property && (element.computedStyle[property] = value)
+        })
+      }
+    })
+    // 行内样式
+    if (key === 'style') {
+      const attributes = value.split(/;\s*/)
+      attributes.forEach(attribute => {
+        const [property, value] = attribute.split(/:\s*/)
+        property && (element.computedStyle[property] = value)
+      })
+    }
+  })
+  element.children.forEach(child => recalculateStyle(cssRules, child, element.computedStyle))
+}
 
 // 1. 由主进程接收用户输入的URL地址
 main.emit('request', {
