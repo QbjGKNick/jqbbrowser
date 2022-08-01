@@ -1,17 +1,40 @@
 <html>
   <head>
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #container {
+        width: 100px;
+        height: 100px;
+      }
+      .main {
+        background: red;
+      }
       #hello {
-        color: red;
+        background: green;
+        width: 100px;
+        height: 100px;
       }
-      .world {
-        color: green;
+      #world {
+        background: blue;
+        width: 100px;
+        height: 100px; 
       }
+      #absolute {
+        background: pink;
+        width: 50px;
+        height: 50px;
+        top: 0;
+        left: 0; 
+      } 
     </style>
   </head>
   <body>
-    <div id="hello" style="background: green;">hello</div>
-    <div class="world" style="display: none;">world</div>
-    <!-- <div class="world" style="background: red;">world</div> -->
+    <div id="container" class="main"></div>
+    <div id="hello" style="color: blue">hello</div>
+    <div id="world" style="display: none;">world</div>
+    <div id="absolute" style="position: absolute;">absolute</div>
   </body>
 </html>
